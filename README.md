@@ -4,7 +4,7 @@ A Streamlit web application for predicting multiple diseases using machine learn
 
 ## Prerequisites
 
-- **Python 3.10 or higher** (required for all dependencies)
+- **Python 3.10** (required for all dependencies)
 
 ## Installation & Setup
 
@@ -27,7 +27,7 @@ source .venv/bin/activate
 ### 2. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements_fixed.txt
 ```
 
 ### 3. Launch the Application
@@ -36,7 +36,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The app will open at `http://localhost:8501`
+The app will open at `http://localhost:8501` by default, or at a different port if Streamlit selects one automatically.
 
 ## Features
 
