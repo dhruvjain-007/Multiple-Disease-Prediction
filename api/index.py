@@ -717,19 +717,34 @@ def get_symptoms():
 
 @app.route('/api/predict/symptom', methods=['POST'])
 def predict_symptom():
-    data = request.json or {}
-    symptoms = data.get('symptoms', [])
-    m = get_models()
-    X = prepare_symptoms_array(symptoms)
-    prediction, prob = m['disease_model'].predict(X)
-    description = m['disease_model'].describe_predicted_disease()
-    precautions = m['disease_model'].predicted_disease_precautions()
-    return jsonify({
-        'prediction': prediction,
-        'probability': prob,
-        'description': description,
-        'precautions': precautions
-    })
+    try:
+        data = request.json or {}
+        symptoms = data.get('symptoms', [])
+        m = get_models()
+        X = prepare_symptoms_array(symptoms)
+        prediction, prob = m['disease_model'].predict(X)
+        description = m['disease_model'].describe_predicted_disease()
+        raw_precautions = m['disease_model'].predicted_disease_precautions()
+        
+        precautions = []
+        if isinstance(raw_precautions, list):
+            for p in raw_precautions:
+                if p and pd.notna(p) and str(p).lower() != 'nan':
+                    precautions.append(str(p).strip())
+        if not precautions:
+            precautions = ["Consult a doctor", "Get adequate rest", "Stay hydrated", "Follow healthy diet"]
+
+        return jsonify({
+            'prediction': str(prediction),
+            'probability': float(prob) if prob is not None and pd.notna(prob) else 0.0,
+            'description': str(description),
+            'precautions': precautions
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/predict/diabetes', methods=['POST'])
 def predict_diabetes():

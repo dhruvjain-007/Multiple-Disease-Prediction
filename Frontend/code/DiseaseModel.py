@@ -50,10 +50,10 @@ class DiseaseModel:
         if disease_name not in self.diseases:
             return "That disease is not contemplated in this model"
         desc_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'symptom_Description.csv'))
-        desc_df = desc_df.apply(lambda col: col.str.strip())
+        desc_df['Disease'] = desc_df['Disease'].astype(str).str.strip()
         matching = desc_df[desc_df['Disease'] == disease_name]['Description']
-        if len(matching) > 0:
-            return matching.values[0]
+        if len(matching) > 0 and pd.notna(matching.values[0]):
+            return str(matching.values[0]).strip()
         return "No detailed description available."
 
     def describe_predicted_disease(self):
@@ -62,19 +62,24 @@ class DiseaseModel:
         return self.describe_disease(self.pred_disease)
     
     def disease_precautions(self, disease_name):
+        default_prec = ["Consult a doctor", "Get adequate rest", "Stay hydrated", "Follow healthy diet"]
         if disease_name not in self.diseases:
-            return ["Consult a doctor", "Get adequate rest", "Stay hydrated", "Follow healthy diet"]
+            return default_prec
         prec_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'symptom_precaution.csv'))
-        prec_df = prec_df.apply(lambda col: col.str.strip())
+        prec_df['Disease'] = prec_df['Disease'].astype(str).str.strip()
         matching = prec_df[prec_df['Disease'] == disease_name].filter(regex='Precaution')
         if len(matching) > 0:
-            return matching.values.tolist()[0]
-        return ["Consult a doctor", "Get adequate rest", "Stay hydrated", "Follow healthy diet"]
+            row = matching.values[0]
+            clean_list = [str(item).strip() for item in row if pd.notna(item) and str(item).strip() and str(item).strip().lower() != 'nan']
+            if clean_list:
+                return clean_list
+        return default_prec
 
     def predicted_disease_precautions(self):
         if self.pred_disease is None:
             return ["Consult a doctor", "Get adequate rest", "Stay hydrated", "Follow healthy diet"]
         return self.disease_precautions(self.pred_disease)
+
 
     def disease_list(self, kaggle_dataset):
         df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'clean_dataset.tsv'), sep='\t')
