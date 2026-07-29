@@ -20,24 +20,33 @@ from helper import prepare_symptoms_array
 
 app = Flask(__name__)
 
-models = {}
+models_cache = {}
 
-def get_models():
-    if not models:
+def get_model(name):
+    if name not in models_cache:
         models_dir = os.path.join(FRONTEND_DIR, 'models')
-        models['diabetes'] = joblib.load(os.path.join(models_dir, 'diabetes_model.sav'))
-        models['heart'] = joblib.load(os.path.join(models_dir, 'heart_disease_model.sav'))
-        models['parkinson'] = joblib.load(os.path.join(models_dir, 'parkinsons_model.sav'))
-        models['lung_cancer'] = joblib.load(os.path.join(models_dir, 'lung_cancer_model.sav'))
-        models['breast_cancer'] = joblib.load(os.path.join(models_dir, 'breast_cancer.sav'))
-        models['chronic'] = joblib.load(os.path.join(models_dir, 'chronic_model.sav'))
-        models['hepatitis'] = joblib.load(os.path.join(models_dir, 'hepititisc_model.sav'))
-        models['liver'] = joblib.load(os.path.join(models_dir, 'liver_model.sav'))
-        
-        disease_model = DiseaseModel()
-        disease_model.load_model()
-        models['disease_model'] = disease_model
-    return models
+        if name == 'disease_model':
+            dm = DiseaseModel()
+            dm.load_model()
+            models_cache['disease_model'] = dm
+        elif name == 'diabetes':
+            models_cache['diabetes'] = joblib.load(os.path.join(models_dir, 'diabetes_model.sav'))
+        elif name == 'heart':
+            models_cache['heart'] = joblib.load(os.path.join(models_dir, 'heart_disease_model.sav'))
+        elif name == 'parkinson':
+            models_cache['parkinson'] = joblib.load(os.path.join(models_dir, 'parkinsons_model.sav'))
+        elif name == 'lung_cancer':
+            models_cache['lung_cancer'] = joblib.load(os.path.join(models_dir, 'lung_cancer_model.sav'))
+        elif name == 'breast_cancer':
+            models_cache['breast_cancer'] = joblib.load(os.path.join(models_dir, 'breast_cancer.sav'))
+        elif name == 'chronic':
+            models_cache['chronic'] = joblib.load(os.path.join(models_dir, 'chronic_model.sav'))
+        elif name == 'hepatitis':
+            models_cache['hepatitis'] = joblib.load(os.path.join(models_dir, 'hepititisc_model.sav'))
+        elif name == 'liver':
+            models_cache['liver'] = joblib.load(os.path.join(models_dir, 'liver_model.sav'))
+    return models_cache[name]
+
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -712,19 +721,19 @@ def home():
 
 @app.route('/api/symptoms', methods=['GET'])
 def get_symptoms():
-    m = get_models()
-    return jsonify(list(m['disease_model'].all_symptoms))
+    from helper import SYMPTOMS_LIST
+    return jsonify(SYMPTOMS_LIST)
 
 @app.route('/api/predict/symptom', methods=['POST'])
 def predict_symptom():
     try:
         data = request.json or {}
         symptoms = data.get('symptoms', [])
-        m = get_models()
+        dm = get_model('disease_model')
         X = prepare_symptoms_array(symptoms)
-        prediction, prob = m['disease_model'].predict(X)
-        description = m['disease_model'].describe_predicted_disease()
-        raw_precautions = m['disease_model'].predicted_disease_precautions()
+        prediction, prob = dm.predict(X)
+        description = dm.describe_predicted_disease()
+        raw_precautions = dm.predicted_disease_precautions()
         
         precautions = []
         if isinstance(raw_precautions, list):
@@ -749,7 +758,7 @@ def predict_symptom():
 @app.route('/api/predict/diabetes', methods=['POST'])
 def predict_diabetes():
     data = request.json or {}
-    m = get_models()
+    model = get_model('diabetes')
     name = data.get('Name', 'Patient')
     features = [[
         data.get('Pregnancies', 0),
@@ -761,14 +770,14 @@ def predict_diabetes():
         data.get('DiabetesPedigreeFunction', 0),
         data.get('Age', 0)
     ]]
-    pred = int(m['diabetes'].predict(features)[0])
+    pred = int(model.predict(features)[0])
     result = "Assessment indicates potential metabolic disorder." if pred == 1 else "Assessment shows no metabolic disorder detected."
     return jsonify({'name': name, 'prediction': pred, 'result': result})
 
 @app.route('/api/predict/heart', methods=['POST'])
 def predict_heart():
     data = request.json or {}
-    m = get_models()
+    model = get_model('heart')
     name = data.get('name', 'Patient')
     features = [[
         data.get('age', 0), data.get('sex', 0), data.get('cp', 0),
@@ -777,14 +786,14 @@ def predict_heart():
         data.get('oldpeak', 0), data.get('slope', 0), data.get('ca', 0),
         data.get('thal', 0)
     ]]
-    pred = int(m['heart'].predict(features)[0])
+    pred = int(model.predict(features)[0])
     result = "Evaluation suggests cardiovascular risk present." if pred == 1 else "Evaluation indicates no cardiovascular risk detected."
     return jsonify({'name': name, 'prediction': pred, 'result': result})
 
 @app.route('/api/predict/parkinson', methods=['POST'])
 def predict_parkinson():
     data = request.json or {}
-    m = get_models()
+    model = get_model('parkinson')
     name = data.get('name', 'Patient')
     features = [[
         data.get('fo',0), data.get('fhi',0), data.get('flo',0), data.get('jit',0),
@@ -794,14 +803,14 @@ def predict_parkinson():
         data.get('rpde',0), data.get('dfa',0), data.get('spr1',0), data.get('spr2',0),
         data.get('d2',0), data.get('ppe',0)
     ]]
-    pred = int(m['parkinson'].predict(features)[0])
+    pred = int(model.predict(features)[0])
     result = "Screening indicates potential movement disorder." if pred == 1 else "Screening shows no movement disorder detected."
     return jsonify({'name': name, 'prediction': pred, 'result': result})
 
 @app.route('/api/predict/liver', methods=['POST'])
 def predict_liver():
     data = request.json or {}
-    m = get_models()
+    model = get_model('liver')
     name = data.get('name', 'Patient')
     features = [[
         data.get('sex', 0), data.get('age', 0), data.get('tb', 0),
@@ -809,14 +818,14 @@ def predict_liver():
         data.get('ast', 0), data.get('tp', 0), data.get('alb', 0),
         data.get('agr', 0)
     ]]
-    pred = int(m['liver'].predict(features)[0])
+    pred = int(model.predict(features)[0])
     result = "Analysis indicates potential liver dysfunction." if pred == 1 else "Analysis shows normal liver function."
     return jsonify({'name': name, 'prediction': pred, 'result': result})
 
 @app.route('/api/predict/hepatitis', methods=['POST'])
 def predict_hepatitis():
     data = request.json or {}
-    m = get_models()
+    model = get_model('hepatitis')
     name = data.get('name', 'Patient')
     df = pd.DataFrame({
         'Age': [data.get('age', 0)],
@@ -832,14 +841,14 @@ def predict_hepatitis():
         'GGT': [data.get('ggt', 0)],
         'PROT': [data.get('prot', 0)]
     })
-    pred = int(m['hepatitis'].predict(df)[0])
+    pred = int(model.predict(df)[0])
     result = "Screening indicates potential hepatitis risk." if pred == 1 else "Screening shows no hepatitis detected."
     return jsonify({'name': name, 'prediction': pred, 'result': result})
 
 @app.route('/api/predict/lung', methods=['POST'])
 def predict_lung():
     data = request.json or {}
-    m = get_models()
+    model = get_model('lung_cancer')
     name = data.get('name', 'Patient')
     df = pd.DataFrame({
         'GENDER': [data.get('gender', 'Male')],
@@ -860,14 +869,14 @@ def predict_lung():
     })
     df.replace({'NO': 1, 'YES': 2}, inplace=True)
     df.columns = df.columns.str.strip()
-    pred = str(m['lung_cancer'].predict(df)[0])
+    pred = str(model.predict(df)[0])
     result = "Screening indicates potential pulmonary risk." if pred == 'YES' else "Screening shows no pulmonary risk detected."
     return jsonify({'name': name, 'prediction': pred, 'result': result})
 
 @app.route('/api/predict/kidney', methods=['POST'])
 def predict_kidney():
     data = request.json or {}
-    m = get_models()
+    model = get_model('chronic')
     name = data.get('name', 'Patient')
     df = pd.DataFrame({
         'age': [data.get('age', 0)], 'bp': [data.get('bp', 0)], 'sg': [data.get('sg', 1.02)],
@@ -879,9 +888,10 @@ def predict_kidney():
         'htn': [data.get('htn', 0)], 'dm': [data.get('dm', 0)], 'cad': [data.get('cad', 0)],
         'appet': [data.get('appet', 1)], 'pe': [data.get('pe', 0)], 'ane': [data.get('ane', 0)]
     })
-    pred = int(m['chronic'].predict(df)[0])
-    result = "Monitoring indicates potential kidney dysfunction." if pred == 1 else "Monitoring shows normal kidney function."
+    pred = int(model.predict(df)[0])
+    result = "Monitor indicates potential chronic kidney risk." if pred == 1 else "Monitor shows normal kidney parameters."
     return jsonify({'name': name, 'prediction': pred, 'result': result})
 
 if __name__ == '__main__':
+
     app.run(host='0.0.0.0', port=5000, debug=True)
