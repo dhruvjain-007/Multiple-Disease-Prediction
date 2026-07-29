@@ -45,7 +45,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Disease Diagnostic System</title>
+    <title>Diagno - AI Diagnostic System</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -65,7 +65,7 @@ HTML_TEMPLATE = """
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
         body { background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #090d16); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
         header { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-        header h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 0.75rem; }
+        header h1 { font-size: 1.6rem; font-weight: 700; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 0.75rem; }
         .badge { background: rgba(56, 189, 248, 0.15); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.3); font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; }
         .layout { display: flex; flex: 1; }
         aside { width: 280px; background: rgba(15, 23, 42, 0.6); border-right: 1px solid var(--border-color); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -101,9 +101,10 @@ HTML_TEMPLATE = """
 </head>
 <body>
     <header>
-        <h1><span>🩺</span> Multi-Disease Diagnostic System</h1>
-        <span class="badge">Vercel Serverless Ready</span>
+        <h1><span>🩺</span> Diagno</h1>
+        <span class="badge">AI Health Diagnostic System</span>
     </header>
+
 
     <div class="layout">
         <aside>

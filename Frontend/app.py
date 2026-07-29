@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import joblib
 
 
-st.set_page_config(page_title="Multi-Disease Diagnostic System", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Diagno - AI Diagnostic System", layout="wide", initial_sidebar_state="expanded")
 
 # ✅ STRONG CSS FIX
 st.markdown("""
@@ -125,7 +125,8 @@ liver_model = joblib.load('models/liver_model.sav')
 # ---------------- SIDEBAR ----------------
 with st.sidebar:
     selected = option_menu(
-        'Multi-Disease Diagnostic System',
+        'Diagno',
+
         [
             'Symptom Analysis',
             'Metabolic Disorder Check',

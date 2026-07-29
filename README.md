@@ -1,4 +1,4 @@
-# Multi-Disease Diagnostic System
+# 🩺 Diagno - AI Multi-Disease Diagnostic System
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
 
