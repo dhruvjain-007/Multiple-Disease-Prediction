@@ -1,6 +1,38 @@
-from flask import Flask, render_template_string
+import os
+import sys
+import joblib
+import pandas as pd
+import numpy as np
+from flask import Flask, request, jsonify, render_template_string
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+FRONTEND_DIR = os.path.join(BASE_DIR, 'Frontend')
+if FRONTEND_DIR not in sys.path:
+    sys.path.insert(0, FRONTEND_DIR)
+
+from code.DiseaseModel import DiseaseModel
+from code.helper import prepare_symptoms_array
 
 app = Flask(__name__)
+
+models = {}
+
+def get_models():
+    if not models:
+        models_dir = os.path.join(FRONTEND_DIR, 'models')
+        models['diabetes'] = joblib.load(os.path.join(models_dir, 'diabetes_model.sav'))
+        models['heart'] = joblib.load(os.path.join(models_dir, 'heart_disease_model.sav'))
+        models['parkinson'] = joblib.load(os.path.join(models_dir, 'parkinsons_model.sav'))
+        models['lung_cancer'] = joblib.load(os.path.join(models_dir, 'lung_cancer_model.sav'))
+        models['breast_cancer'] = joblib.load(os.path.join(models_dir, 'breast_cancer.sav'))
+        models['chronic'] = joblib.load(os.path.join(models_dir, 'chronic_model.sav'))
+        models['hepatitis'] = joblib.load(os.path.join(models_dir, 'hepititisc_model.sav'))
+        models['liver'] = joblib.load(os.path.join(models_dir, 'liver_model.sav'))
+        
+        disease_model = DiseaseModel()
+        disease_model.load_model()
+        models['disease_model'] = disease_model
+    return models
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -84,7 +116,7 @@ HTML_TEMPLATE = """
             <!-- 1. Symptom Analysis -->
             <div id="tab-symptom" class="panel active">
                 <div class="panel-title">AI Symptom Analysis</div>
-                <div class="panel-desc">Select observed symptoms to evaluate potential health conditions using XGBoost ML model.</div>
+                <div class="panel-desc">Select observed symptoms to evaluate potential health conditions using ML classifier.</div>
                 <input type="text" id="symptom-search" class="search-input" placeholder="Search symptoms..." oninput="filterSymptoms()">
                 <div class="symptoms-selector" id="symptoms-list"></div>
                 <button class="btn-submit" onclick="submitSymptomAnalysis()">Analyze Symptoms</button>
@@ -467,6 +499,164 @@ HTML_TEMPLATE = """
 @app.route('/')
 def home():
     return render_template_string(HTML_TEMPLATE)
+
+@app.route('/api/symptoms', methods=['GET'])
+def get_symptoms():
+    m = get_models()
+    return jsonify(list(m['disease_model'].all_symptoms))
+
+@app.route('/api/predict/symptom', methods=['POST'])
+def predict_symptom():
+    data = request.json or {}
+    symptoms = data.get('symptoms', [])
+    m = get_models()
+    X = prepare_symptoms_array(symptoms)
+    prediction, prob = m['disease_model'].predict(X)
+    description = m['disease_model'].describe_predicted_disease()
+    precautions = m['disease_model'].predicted_disease_precautions()
+    return jsonify({
+        'prediction': prediction,
+        'probability': prob,
+        'description': description,
+        'precautions': precautions
+    })
+
+@app.route('/api/predict/diabetes', methods=['POST'])
+def predict_diabetes():
+    data = request.json or {}
+    m = get_models()
+    name = data.get('Name', 'Patient')
+    features = [[
+        data.get('Pregnancies', 0),
+        data.get('Glucose', 0),
+        data.get('BloodPressure', 0),
+        data.get('SkinThickness', 0),
+        data.get('Insulin', 0),
+        data.get('BMI', 0),
+        data.get('DiabetesPedigreeFunction', 0),
+        data.get('Age', 0)
+    ]]
+    pred = int(m['diabetes'].predict(features)[0])
+    result = "Assessment indicates potential metabolic disorder." if pred == 1 else "Assessment shows no metabolic disorder detected."
+    return jsonify({'name': name, 'prediction': pred, 'result': result})
+
+@app.route('/api/predict/heart', methods=['POST'])
+def predict_heart():
+    data = request.json or {}
+    m = get_models()
+    name = data.get('name', 'Patient')
+    features = [[
+        data.get('age', 0), data.get('sex', 0), data.get('cp', 0),
+        data.get('trestbps', 0), data.get('chol', 0), data.get('fbs', 0),
+        data.get('restecg', 0), data.get('thalach', 0), data.get('exang', 0),
+        data.get('oldpeak', 0), data.get('slope', 0), data.get('ca', 0),
+        data.get('thal', 0)
+    ]]
+    pred = int(m['heart'].predict(features)[0])
+    result = "Evaluation suggests cardiovascular risk present." if pred == 1 else "Evaluation indicates no cardiovascular risk detected."
+    return jsonify({'name': name, 'prediction': pred, 'result': result})
+
+@app.route('/api/predict/parkinson', methods=['POST'])
+def predict_parkinson():
+    data = request.json or {}
+    m = get_models()
+    name = data.get('name', 'Patient')
+    features = [[
+        data.get('fo',0), data.get('fhi',0), data.get('flo',0), data.get('jit',0),
+        data.get('jitabs',0), data.get('rap',0), data.get('ppq',0), data.get('ddp',0),
+        data.get('shim',0), data.get('shimdb',0), data.get('apq3',0), data.get('apq5',0),
+        data.get('apq',0), data.get('dda',0), data.get('nhr',0), data.get('hnr',0),
+        data.get('rpde',0), data.get('dfa',0), data.get('spr1',0), data.get('spr2',0),
+        data.get('d2',0), data.get('ppe',0)
+    ]]
+    pred = int(m['parkinson'].predict(features)[0])
+    result = "Screening indicates potential movement disorder." if pred == 1 else "Screening shows no movement disorder detected."
+    return jsonify({'name': name, 'prediction': pred, 'result': result})
+
+@app.route('/api/predict/liver', methods=['POST'])
+def predict_liver():
+    data = request.json or {}
+    m = get_models()
+    name = data.get('name', 'Patient')
+    features = [[
+        data.get('sex', 0), data.get('age', 0), data.get('tb', 0),
+        data.get('db', 0), data.get('alp', 0), data.get('alt', 0),
+        data.get('ast', 0), data.get('tp', 0), data.get('alb', 0),
+        data.get('agr', 0)
+    ]]
+    pred = int(m['liver'].predict(features)[0])
+    result = "Analysis indicates potential liver dysfunction." if pred == 1 else "Analysis shows normal liver function."
+    return jsonify({'name': name, 'prediction': pred, 'result': result})
+
+@app.route('/api/predict/hepatitis', methods=['POST'])
+def predict_hepatitis():
+    data = request.json or {}
+    m = get_models()
+    name = data.get('name', 'Patient')
+    df = pd.DataFrame({
+        'Age': [data.get('age', 0)],
+        'Sex': [data.get('sex', 1)],
+        'ALB': [data.get('alb', 0)],
+        'ALP': [data.get('alp', 0)],
+        'ALT': [data.get('alt', 0)],
+        'AST': [data.get('ast', 0)],
+        'BIL': [data.get('bil', 0)],
+        'CHE': [data.get('che', 0)],
+        'CHOL': [data.get('chol', 0)],
+        'CREA': [data.get('crea', 0)],
+        'GGT': [data.get('ggt', 0)],
+        'PROT': [data.get('prot', 0)]
+    })
+    pred = int(m['hepatitis'].predict(df)[0])
+    result = "Screening indicates potential hepatitis risk." if pred == 1 else "Screening shows no hepatitis detected."
+    return jsonify({'name': name, 'prediction': pred, 'result': result})
+
+@app.route('/api/predict/lung', methods=['POST'])
+def predict_lung():
+    data = request.json or {}
+    m = get_models()
+    name = data.get('name', 'Patient')
+    df = pd.DataFrame({
+        'GENDER': [data.get('gender', 'Male')],
+        'AGE': [data.get('age', 0)],
+        'SMOKING': [data.get('smoking', 'NO')],
+        'YELLOW_FINGERS': [data.get('yellow_fingers', 'NO')],
+        'ANXIETY': [data.get('anxiety', 'NO')],
+        'PEER_PRESSURE': [data.get('peer_pressure', 'NO')],
+        'CHRONICDISEASE': [data.get('chronic_disease', 'NO')],
+        'FATIGUE': [data.get('fatigue', 'NO')],
+        'ALLERGY': [data.get('allergy', 'NO')],
+        'WHEEZING': [data.get('wheezing', 'NO')],
+        'ALCOHOLCONSUMING': [data.get('alcohol_consuming', 'NO')],
+        'COUGHING': [data.get('coughing', 'NO')],
+        'SHORTNESSOFBREATH': [data.get('shortness_of_breath', 'NO')],
+        'SWALLOWINGDIFFICULTY': [data.get('swallowing_difficulty', 'NO')],
+        'CHESTPAIN': [data.get('chest_pain', 'NO')]
+    })
+    df.replace({'NO': 1, 'YES': 2}, inplace=True)
+    df.columns = df.columns.str.strip()
+    pred = str(m['lung_cancer'].predict(df)[0])
+    result = "Screening indicates potential pulmonary risk." if pred == 'YES' else "Screening shows no pulmonary risk detected."
+    return jsonify({'name': name, 'prediction': pred, 'result': result})
+
+@app.route('/api/predict/kidney', methods=['POST'])
+def predict_kidney():
+    data = request.json or {}
+    m = get_models()
+    name = data.get('name', 'Patient')
+    df = pd.DataFrame({
+        'age': [data.get('age', 0)], 'bp': [data.get('bp', 0)], 'sg': [data.get('sg', 1.02)],
+        'al': [data.get('al', 0)], 'su': [data.get('su', 0)], 'rbc': [data.get('rbc', 1)],
+        'pc': [data.get('pc', 1)], 'pcc': [data.get('pcc', 0)], 'ba': [data.get('ba', 0)],
+        'bgr': [data.get('bgr', 0)], 'bu': [data.get('bu', 0)], 'sc': [data.get('sc', 0)],
+        'sod': [data.get('sod', 0)], 'pot': [data.get('pot', 0)], 'hemo': [data.get('hemo', 0)],
+        'pcv': [data.get('pcv', 0)], 'wc': [data.get('wc', 0)], 'rc': [data.get('rc', 0)],
+        'htn': [data.get('htn', 0)], 'dm': [data.get('dm', 0)], 'cad': [data.get('cad', 0)],
+        'appet': [data.get('appet', 1)], 'pe': [data.get('pe', 0)], 'ane': [data.get('ane', 0)]
+    })
+    pred = int(m['chronic'].predict(df)[0])
+    result = "Monitoring indicates potential kidney dysfunction." if pred == 1 else "Monitoring shows normal kidney function."
+    return jsonify({'name': name, 'prediction': pred, 'result': result})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

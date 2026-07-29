@@ -1,44 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/",
+      "source": "/(.*)",
       "destination": "/api/index"
-    },
-    {
-      "source": "/api/symptoms",
-      "destination": "/api/symptom"
-    },
-    {
-      "source": "/api/predict/symptom",
-      "destination": "/api/symptom"
-    },
-    {
-      "source": "/api/predict/diabetes",
-      "destination": "/api/diabetes"
-    },
-    {
-      "source": "/api/predict/heart",
-      "destination": "/api/heart"
-    },
-    {
-      "source": "/api/predict/parkinson",
-      "destination": "/api/parkinson"
-    },
-    {
-      "source": "/api/predict/liver",
-      "destination": "/api/liver"
-    },
-    {
-      "source": "/api/predict/hepatitis",
-      "destination": "/api/hepatitis"
-    },
-    {
-      "source": "/api/predict/lung",
-      "destination": "/api/lung"
-    },
-    {
-      "source": "/api/predict/kidney",
-      "destination": "/api/kidney"
     }
   ]
 }
