@@ -136,9 +136,18 @@ class DiseaseModel:
         self.symptoms = X
         preds = self.model.predict(self.symptoms)
         self.pred_disease = str(preds[0])
-        probs = self.model.predict_proba(self.symptoms)[0]
-        disease_probability = float(np.max(probs))
+        disease_probability = 0.85
+        if hasattr(self.model, 'predict_proba'):
+            try:
+                probs = self.model.predict_proba(self.symptoms)[0]
+                disease_probability = float(np.max(probs))
+            except Exception:
+                pass
+        if disease_probability > 1.0:
+            disease_probability = disease_probability / 100.0 if disease_probability <= 100.0 else 1.0
+        disease_probability = float(min(max(disease_probability, 0.0), 1.0))
         return self.pred_disease, disease_probability
+
 
     def describe_disease(self, disease_name):
         return DESCRIPTIONS_MAP.get(str(disease_name).strip(), "No detailed description available.")

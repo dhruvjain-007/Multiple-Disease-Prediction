@@ -561,8 +561,12 @@ HTML_TEMPLATE = """
                 const box = document.getElementById('res-symptom');
                 box.classList.add('active');
                 
-                const confidence = data.probability ? (data.probability * 100).toFixed(1) + '%' : 'N/A';
+                let rawProb = typeof data.probability === 'number' ? data.probability : parseFloat(data.probability) || 0;
+                let pct = rawProb > 1.0 ? rawProb : rawProb * 100;
+                pct = Math.min(Math.max(pct, 0), 100);
+                const confidence = pct.toFixed(1) + '%';
                 document.getElementById('res-symptom-header').innerHTML = `<span style="color: var(--primary)">Potential Condition:</span> ${data.prediction} <span style="font-size: 0.85rem; background: rgba(56,189,248,0.2); padding: 0.2rem 0.6rem; border-radius: 6px; margin-left: 0.5rem; color: var(--primary); font-weight: 600;">${confidence} Confidence</span>`;
+
                 document.getElementById('res-symptom-desc').innerText = data.description || 'No description available.';
                 
                 const precList = document.getElementById('res-symptom-precautions');
