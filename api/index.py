@@ -7,11 +7,16 @@ from flask import Flask, request, jsonify, render_template_string
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 FRONTEND_DIR = os.path.join(BASE_DIR, 'Frontend')
+CODE_DIR = os.path.join(FRONTEND_DIR, 'code')
+
+if CODE_DIR not in sys.path:
+    sys.path.insert(0, CODE_DIR)
 if FRONTEND_DIR not in sys.path:
     sys.path.insert(0, FRONTEND_DIR)
 
-from code.DiseaseModel import DiseaseModel
-from code.helper import prepare_symptoms_array
+from DiseaseModel import DiseaseModel
+from helper import prepare_symptoms_array
+
 
 app = Flask(__name__)
 

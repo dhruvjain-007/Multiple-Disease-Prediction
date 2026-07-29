@@ -7,11 +7,14 @@ from streamlit_option_menu import option_menu
 import pickle
 import numpy as np
 import plotly.figure_factory as ff
-from code.DiseaseModel import DiseaseModel
-from code.helper import prepare_symptoms_array
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'code'))
+from DiseaseModel import DiseaseModel
+from helper import prepare_symptoms_array
 import seaborn as sns
 import matplotlib.pyplot as plt
 import joblib
+
 
 st.set_page_config(page_title="Multi-Disease Diagnostic System", layout="wide", initial_sidebar_state="expanded")
 
