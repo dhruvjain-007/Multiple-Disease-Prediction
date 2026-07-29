@@ -1,5 +1,8 @@
 import xgboost as xgb
 import pandas as pd
+import os
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 class DiseaseModel:
 
@@ -8,12 +11,16 @@ class DiseaseModel:
         self.symptoms = None
         self.pred_disease = None
         self.model = xgb.XGBClassifier()
-        self.diseases = self.disease_list('data/dataset.csv')
+        self.diseases = self.disease_list(os.path.join(BASE_DIR, 'data', 'dataset.csv'))
 
     def load_xgboost(self, model_path):
+        if not os.path.isabs(model_path):
+            model_path = os.path.join(BASE_DIR, model_path)
         self.model.load_model(model_path)
 
     def save_xgboost(self, model_path):
+        if not os.path.isabs(model_path):
+            model_path = os.path.join(BASE_DIR, model_path)
         self.model.save_model(model_path)
 
     def predict(self, X):
@@ -21,7 +28,7 @@ class DiseaseModel:
         disease_pred_idx = self.model.predict(self.symptoms)
         self.pred_disease = self.diseases[disease_pred_idx].values[0]
         disease_probability_array = self.model.predict_proba(self.symptoms)
-        disease_probability = disease_probability_array[0, disease_pred_idx[0]]
+        disease_probability = float(disease_probability_array[0, disease_pred_idx[0]])
         return self.pred_disease, disease_probability
 
     
@@ -31,7 +38,7 @@ class DiseaseModel:
             return "That disease is not contemplated in this model"
         
         # Read disease dataframe
-        desc_df = pd.read_csv('data/symptom_Description.csv')
+        desc_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'symptom_Description.csv'))
         desc_df = desc_df.apply(lambda col: col.str.strip())
 
         return desc_df[desc_df['Disease'] == disease_name]['Description'].values[0]
@@ -49,7 +56,7 @@ class DiseaseModel:
             return "That disease is not contemplated in this model"
 
         # Read precautions dataframe
-        prec_df = pd.read_csv('data/symptom_precaution.csv')
+        prec_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'symptom_precaution.csv'))
         prec_df = prec_df.apply(lambda col: col.str.strip())
 
         return prec_df[prec_df['Disease'] == disease_name].filter(regex='Precaution').values.tolist()[0]
@@ -63,7 +70,7 @@ class DiseaseModel:
 
     def disease_list(self, kaggle_dataset):
 
-        df = pd.read_csv('data/clean_dataset.tsv', sep='\t')
+        df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'clean_dataset.tsv'), sep='\t')
         # Preprocessing
         y_data = df.iloc[:,-1]
         X_data = df.iloc[:,:-1]

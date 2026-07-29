@@ -1,12 +1,45 @@
 # Multi-Disease Diagnostic System
 
-A Streamlit web application for predicting multiple diseases using machine learning models. The app analyzes symptoms, medical history, and test results to provide disease risk assessments.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
 
-## Prerequisites
+An AI-powered web application for predicting multiple diseases using machine learning models (XGBoost, Random Forest, SVM, Logistic Regression). The system analyzes symptoms, physiological metrics, and lab tests to provide comprehensive risk assessments.
 
-- **Python 3.10** (required for all dependencies)
+---
 
-## Installation & Setup
+## 🚀 Live Hosting Options
+
+### Option 1: Deploy on Vercel (Serverless Web App)
+
+This repository is pre-configured for 1-click deployment on **Vercel** using Python Serverless Functions (`api/index.py`).
+
+#### Step-by-Step Vercel Deployment:
+
+1. **Push your code to GitHub** (if not already done).
+2. Go to [Vercel](https://vercel.com/) and log in with your GitHub account.
+3. Click **"Add New..."** > **"Project"**.
+4. Select your **`Multiple-Disease-Prediction`** GitHub repository and click **Import**.
+5. Keep default settings (Vercel auto-detects `vercel.json` and `api/index.py`).
+6. Click **Deploy**.
+7. Once deployment finishes, copy your live Vercel URL (e.g., `https://your-project-name.vercel.app`).
+
+#### Add Live Link to GitHub:
+- On your GitHub repo page, click the ⚙️ **Settings icon** next to **About** (top right of repo home).
+- Paste your Vercel URL in the **Website** field and check **Use label "Vercel"** or save changes.
+
+---
+
+### Option 2: Deploy on Streamlit Community Cloud (Native Streamlit)
+
+If you prefer hosting the original Streamlit frontend (`Frontend/app.py`):
+
+1. Go to [share.streamlit.io](https://share.streamlit.io/) and log in with GitHub.
+2. Click **"New app"**.
+3. Select your repository, branch (`main`), and set **Main file path** to `Frontend/app.py`.
+4. Click **Deploy!**.
+
+---
+
+## 💻 Local Installation & Setup
 
 ### 1. Create Virtual Environment (Python 3.10)
 
@@ -17,7 +50,7 @@ py -3.10 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-**macOS/Linux:**
+**macOS / Linux:**
 ```bash
 cd Frontend
 python3.10 -m venv .venv
@@ -30,32 +63,34 @@ source .venv/bin/activate
 pip install -r requirements_fixed.txt
 ```
 
-### 3. Launch the Application
+### 3. Launch Applications Locally
 
-```bash
-streamlit run app.py
-```
+- **Streamlit App:**
+  ```bash
+  streamlit run app.py
+  ```
+- **Vercel Serverless App (Flask):**
+  ```bash
+  python ../api/index.py
+  ```
 
-The app will open at `http://localhost:8501` by default, or at a different port if Streamlit selects one automatically.
+---
 
-## Features
+## ✨ Features & Disease Diagnostic Modules
 
-- **Symptom Analysis** - Disease prediction based on symptoms
-- **Metabolic Disorder Check** - Diabetes and metabolic health assessment
-- **Cardiovascular Risk Assessment** - Heart disease evaluation
-- **Movement Disorder Evaluation** - Parkinson's disease prediction
-- **Liver Function Test** - Liver disease assessment
-- **Hepatitis Screening** - Hepatitis risk evaluation
-- **Pulmonary Oncology Check** - Lung cancer prediction
-- **Kidney Disease Monitor** - Chronic kidney disease assessment
+- **🔍 Symptom Analysis** - AI disease prediction based on 130+ symptoms (XGBoost)
+- **🩸 Metabolic Disorder Check** - Diabetes risk evaluation (SVM)
+- **❤️ Cardiovascular Risk Assessment** - Heart disease evaluation (Logistic Regression)
+- **🧠 Movement Disorder Evaluation** - Parkinson's disease prediction (SVM)
+- **🧪 Liver Function Test** - Liver disease assessment (Logistic Regression)
+- **🔬 Hepatitis Screening** - Hepatitis risk evaluation (Random Forest)
+- **🫁 Pulmonary Oncology Check** - Lung cancer risk assessment (Pipeline Stacking)
+- **💧 Kidney Disease Monitor** - Chronic kidney disease monitoring (Logistic Regression)
 
-## Technology Stack
+---
 
-- [Streamlit](https://docs.streamlit.io/) - Frontend framework
-- [Python 3.10+](https://www.python.org) - Programming language
-- [Scikit-learn](https://scikit-learn.org/) - Machine learning models
-- [XGBoost](https://xgboost.readthedocs.io/) - Gradient boosting framework
-- [Plotly](https://plotly.com/) - Data visualization
+## 🛠️ Technology Stack
 
-
-
+- **Backend / Serverless**: Python 3.10+, Flask, Vercel Serverless Functions
+- **Frontend**: Glassmorphic Responsive Web Dashboard & Streamlit
+- **Machine Learning**: Scikit-Learn, XGBoost, Joblib, Pandas, NumPy
