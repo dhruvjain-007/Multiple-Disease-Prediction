@@ -527,21 +527,47 @@ HTML_TEMPLATE = """
         }
 
         function submitSymptomAnalysis() {
+            const btn = document.querySelector('#tab-symptom .btn-submit');
+            const origText = btn ? btn.innerText : 'Analyze Symptoms';
+            
             const selected = Array.from(selectedSymptomsSet);
-            if (selected.length === 0) { alert('Please select at least one symptom'); return; }
+            if (selected.length === 0) { 
+                alert('Please select or search for at least one symptom before running analysis.'); 
+                return; 
+            }
+            
+            if (btn) { btn.innerText = 'Analyzing Symptoms...'; btn.disabled = true; }
+
             fetch('/api/predict/symptom', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ symptoms: selected })
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Prediction API server error (' + res.status + ')');
+                return res.json();
+            })
             .then(data => {
+                if (btn) { btn.innerText = origText; btn.disabled = false; }
                 const box = document.getElementById('res-symptom');
                 box.classList.add('active');
-                document.getElementById('res-symptom-header').innerHTML = `<span style="color: var(--primary)">Potential Condition:</span> ${data.prediction} (${(data.probability * 100).toFixed(2)}% confidence)`;
-                document.getElementById('res-symptom-desc').innerText = data.description;
+                
+                const confidence = data.probability ? (data.probability * 100).toFixed(1) + '%' : 'N/A';
+                document.getElementById('res-symptom-header').innerHTML = `<span style="color: var(--primary)">Potential Condition:</span> ${data.prediction} <span style="font-size: 0.85rem; background: rgba(56,189,248,0.2); padding: 0.2rem 0.6rem; border-radius: 6px; margin-left: 0.5rem; color: var(--primary); font-weight: 600;">${confidence} Confidence</span>`;
+                document.getElementById('res-symptom-desc').innerText = data.description || 'No description available.';
+                
                 const precList = document.getElementById('res-symptom-precautions');
-                precList.innerHTML = '<strong>Recommended Precautions:</strong>' + data.precautions.map(p => `<li>${p}</li>`).join('');
+                if (data.precautions && Array.isArray(data.precautions)) {
+                    precList.innerHTML = '<strong>Recommended Precautions:</strong>' + data.precautions.map(p => `<li>${p}</li>`).join('');
+                } else {
+                    precList.innerHTML = '';
+                }
+                
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            })
+            .catch(err => {
+                if (btn) { btn.innerText = origText; btn.disabled = false; }
+                alert('Analysis Error: ' + err.message);
             });
         }
 
@@ -551,7 +577,9 @@ HTML_TEMPLATE = """
             box.classList.add('active');
             const color = isPositive ? 'var(--warning)' : 'var(--success)';
             box.innerHTML = `<div class="result-header" style="color: ${color}">${text}</div>`;
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
+
 
         function submitDiabetes() {
             const payload = {
