@@ -95,7 +95,20 @@ HTML_TEMPLATE = """
         .result-desc { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem; }
         .precautions-list { margin-top: 1rem; padding-left: 1.25rem; color: var(--text-main); }
         .precautions-list li { margin-bottom: 0.4rem; font-size: 0.9rem; }
-        .search-input { width: 100%; padding: 0.75rem 1rem; border-radius: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); color: var(--text-main); margin-bottom: 1rem; outline: none; }
+        .search-wrapper { position: relative; margin-bottom: 1rem; }
+        .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid var(--primary); border-radius: 12px; max-height: 240px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); display: none; margin-top: 4px; }
+        .autocomplete-dropdown.active { display: block; }
+        .dropdown-item { padding: 0.75rem 1rem; color: var(--text-main); cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease; display: flex; justify-content: space-between; align-items: center; }
+        .dropdown-item:hover, .dropdown-item.active { background: rgba(56, 189, 248, 0.15); color: var(--primary); }
+        .dropdown-item .add-tag { font-size: 0.75rem; background: rgba(56, 189, 248, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px; color: var(--primary); font-weight: 600; }
+        .selected-chips-box { margin-bottom: 1.25rem; }
+        .selected-chips-header { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .selected-chips-container { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; min-height: 52px; align-items: center; }
+        .chip { background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2)); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--text-main); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; animation: fadeIn 0.15s ease; }
+        .chip-remove { background: rgba(248, 113, 113, 0.2); color: var(--danger); border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.75rem; line-height: 1; transition: background 0.15s ease; }
+        .chip-remove:hover { background: var(--danger); color: #fff; }
+        .empty-chips-msg { color: var(--text-muted); font-size: 0.85rem; font-style: italic; }
+        .search-input { width: 100%; padding: 0.75rem 1rem; border-radius: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); color: var(--text-main); outline: none; }
         @media (max-width: 768px) { .layout { flex-direction: column; } aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); } main { padding: 1.25rem; } }
     </style>
 </head>
@@ -104,6 +117,7 @@ HTML_TEMPLATE = """
         <h1><span>🩺</span> Diagno</h1>
         <span class="badge">AI Health Diagnostic System</span>
     </header>
+
 
 
     <div class="layout">
@@ -122,16 +136,37 @@ HTML_TEMPLATE = """
             <!-- 1. Symptom Analysis -->
             <div id="tab-symptom" class="panel active">
                 <div class="panel-title">AI Symptom Analysis</div>
-                <div class="panel-desc">Select observed symptoms to evaluate potential health conditions using ML classifier.</div>
-                <input type="text" id="symptom-search" class="search-input" placeholder="Search symptoms..." oninput="filterSymptoms()">
-                <div class="symptoms-selector" id="symptoms-list"></div>
+                <div class="panel-desc">Search and select observed symptoms to evaluate potential health conditions.</div>
+                
+                <div class="search-wrapper">
+                    <input type="text" id="symptom-search" class="search-input" placeholder="🔍 Type a symptom (e.g. headache, fever, itching)..." autocomplete="off" oninput="onSearchInput(this.value)" onfocus="onSearchInput(this.value)">
+                    <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                </div>
+
+                <div class="selected-chips-box">
+                    <div class="selected-chips-header">
+                        <span>Selected Symptoms (<span id="selected-count">0</span>)</span>
+                        <button type="button" onclick="clearAllSymptoms()" style="background: none; border: none; color: var(--danger); font-size: 0.8rem; cursor: pointer;">Clear All</button>
+                    </div>
+                    <div id="selected-chips" class="selected-chips-container">
+                        <span class="empty-chips-msg">No symptoms selected yet. Type above or select from quick list below.</span>
+                    </div>
+                </div>
+
+                <details style="margin-bottom: 1.5rem;" open>
+                    <summary style="cursor: pointer; color: var(--primary); font-weight: 500; font-size: 0.9rem; margin-bottom: 0.75rem;">Browse All Symptoms Grid (133)</summary>
+                    <div class="symptoms-selector" id="symptoms-list"></div>
+                </details>
+
                 <button class="btn-submit" onclick="submitSymptomAnalysis()">Analyze Symptoms</button>
+
                 <div id="res-symptom" class="result-box">
                     <div id="res-symptom-header" class="result-header"></div>
                     <div id="res-symptom-desc" class="result-desc"></div>
                     <ul id="res-symptom-precautions" class="precautions-list"></ul>
                 </div>
             </div>
+
 
             <!-- 2. Metabolic / Diabetes -->
             <div id="tab-diabetes" class="panel">
@@ -318,6 +353,8 @@ HTML_TEMPLATE = """
 
     <script>
         let allSymptoms = [];
+        let selectedSymptomsSet = new Set();
+        let currentFocusIndex = -1;
 
         function showTab(tabId) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -330,34 +367,160 @@ HTML_TEMPLATE = """
             .then(res => res.json())
             .then(data => {
                 allSymptoms = data;
-                renderSymptoms(allSymptoms);
+                renderQuickGrid(allSymptoms);
             })
             .catch(err => console.error("Error loading symptoms", err));
 
-        function renderSymptoms(symptoms) {
+        function formatSymptomName(sym) {
+            return sym.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase());
+        }
+
+        function renderQuickGrid(symptoms) {
             const container = document.getElementById('symptoms-list');
             container.innerHTML = '';
             symptoms.forEach(sym => {
                 const label = document.createElement('label');
                 label.className = 'symptom-item';
-                label.innerHTML = `<input type="checkbox" value="${sym}"> ${sym.replace(/_/g, ' ')}`;
+                const isChecked = selectedSymptomsSet.has(sym) ? 'checked' : '';
+                label.innerHTML = `<input type="checkbox" value="${sym}" ${isChecked} onchange="toggleSymptom('${sym}', this.checked)"> ${formatSymptomName(sym)}`;
                 container.appendChild(label);
             });
         }
 
-        function filterSymptoms() {
-            const query = document.getElementById('symptom-search').value.toLowerCase();
-            const filtered = allSymptoms.filter(s => s.toLowerCase().includes(query));
-            renderSymptoms(filtered);
+        function toggleSymptom(sym, checked) {
+            if (checked) {
+                selectedSymptomsSet.add(sym);
+            } else {
+                selectedSymptomsSet.delete(sym);
+            }
+            updateChipsUI();
+        }
+
+        function addSymptom(sym) {
+            selectedSymptomsSet.add(sym);
+            updateChipsUI();
+            document.getElementById('symptom-search').value = '';
+            closeDropdown();
+        }
+
+        function removeSymptom(sym) {
+            selectedSymptomsSet.delete(sym);
+            updateChipsUI();
+        }
+
+        function clearAllSymptoms() {
+            selectedSymptomsSet.clear();
+            updateChipsUI();
+        }
+
+        function updateChipsUI() {
+            const container = document.getElementById('selected-chips');
+            const countEl = document.getElementById('selected-count');
+            countEl.innerText = selectedSymptomsSet.size;
+
+            if (selectedSymptomsSet.size === 0) {
+                container.innerHTML = '<span class="empty-chips-msg">No symptoms selected yet. Type above or select from quick list below.</span>';
+            } else {
+                container.innerHTML = '';
+                selectedSymptomsSet.forEach(sym => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip';
+                    chip.innerHTML = `${formatSymptomName(sym)} <span class="chip-remove" onclick="removeSymptom('${sym}')">&times;</span>`;
+                    container.appendChild(chip);
+                });
+            }
+
+            // Sync quick grid checkboxes
+            document.querySelectorAll('#symptoms-list input[type="checkbox"]').forEach(chk => {
+                chk.checked = selectedSymptomsSet.has(chk.value);
+            });
+        }
+
+        function onSearchInput(query) {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            const q = query.trim().toLowerCase();
+            currentFocusIndex = -1;
+
+            if (!q) {
+                dropdown.classList.remove('active');
+                dropdown.innerHTML = '';
+                return;
+            }
+
+            const matches = allSymptoms.filter(sym => {
+                const readable = formatSymptomName(sym).toLowerCase();
+                return (sym.toLowerCase().includes(q) || readable.includes(q)) && !selectedSymptomsSet.has(sym);
+            });
+
+            if (matches.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item" style="color: var(--text-muted); cursor: default;">No matching unselected symptoms found</div>';
+                dropdown.classList.add('active');
+                return;
+            }
+
+            dropdown.innerHTML = '';
+            matches.slice(0, 10).forEach(sym => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.innerHTML = `<span>${formatSymptomName(sym)}</span> <span class="add-tag">+ Add</span>`;
+                item.onclick = () => addSymptom(sym);
+                dropdown.appendChild(item);
+            });
+            dropdown.classList.add('active');
+        }
+
+        function closeDropdown() {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            dropdown.classList.remove('active');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-wrapper')) {
+                closeDropdown();
+            }
+        });
+
+        // Keyboard navigation for search input
+        document.getElementById('symptom-search').addEventListener('keydown', function(e) {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            const items = dropdown.querySelectorAll('.dropdown-item:not([style*="cursor: default"])');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentFocusIndex = (currentFocusIndex + 1) % items.length;
+                setActiveItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentFocusIndex = (currentFocusIndex - 1 + items.length) % items.length;
+                setActiveItem(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentFocusIndex > -1 && items[currentFocusIndex]) {
+                    items[currentFocusIndex].click();
+                } else if (items.length > 0) {
+                    items[0].click();
+                }
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+            }
+        });
+
+        function setActiveItem(items) {
+            items.forEach(i => i.classList.remove('active'));
+            if (currentFocusIndex >= 0 && items[currentFocusIndex]) {
+                items[currentFocusIndex].classList.add('active');
+                items[currentFocusIndex].scrollIntoView({ block: 'nearest' });
+            }
         }
 
         function submitSymptomAnalysis() {
-            const checked = Array.from(document.querySelectorAll('#symptoms-list input:checked')).map(i => i.value);
-            if (checked.length === 0) { alert('Please select at least one symptom'); return; }
+            const selected = Array.from(selectedSymptomsSet);
+            if (selected.length === 0) { alert('Please select at least one symptom'); return; }
             fetch('/api/predict/symptom', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ symptoms: checked })
+                body: JSON.stringify({ symptoms: selected })
             })
             .then(res => res.json())
             .then(data => {
@@ -369,6 +532,7 @@ HTML_TEMPLATE = """
                 precList.innerHTML = '<strong>Recommended Precautions:</strong>' + data.precautions.map(p => `<li>${p}</li>`).join('');
             });
         }
+
 
         function showResult(boxId, text, isPositive) {
             const box = document.getElementById(boxId);
